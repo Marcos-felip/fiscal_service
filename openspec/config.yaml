@@ -1,0 +1,5 @@
+schema: spec-driven
+root: openspec
+changes:
+  - name: implement-fiscal-engine
+    description: Implementar o motor fiscal .NET com DFe.NET, MediatR e Clean Architecture
