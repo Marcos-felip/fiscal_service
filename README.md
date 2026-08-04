@@ -73,6 +73,14 @@ docker compose up --build
 dotnet run --project src/FiscalService.Api
 ```
 
+O perfil em `src/FiscalService.Api/Properties/launchSettings.json` já define
+`ASPNETCORE_ENVIRONMENT=Development`, que carrega o `appsettings.Development.json` com
+uma API Key de desenvolvimento (`dev-api-key-change-in-production`). Ou seja: para rodar
+local você **não** precisa do `.env` — ele é para Docker e produção.
+
+> Rodar sem esse perfil (ou com `ASPNETCORE_ENVIRONMENT=Production` e sem a variável
+> definida) derruba o serviço no boot, como descrito acima.
+
 Confira se subiu:
 
 ```bash
