@@ -1,51 +1,31 @@
-using System.Text;
 using FiscalService.Application.Interfaces;
-using FiscalService.Domain.Entities;
-using NFe.Classes;
+using NFe.Danfe.QuestPdf.ImpressaoNfce;
+using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 
 namespace FiscalService.Infrastructure.Danfe;
 
+/// <summary>
+/// Gera o DANFE NFC-e usando o layout pronto da Zeus (NFe.Danfe.QuestPdf), que monta o
+/// cupom a partir do proprio XML autorizado — inclusive o QR Code e a chave de acesso.
+/// </summary>
 public class QuestPdfDanfeGenerator : IDanfeGenerator
 {
+    private const TamanhoImpressao TamanhoBobina = TamanhoImpressao.Impressao80;
+
     static QuestPdfDanfeGenerator()
     {
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public byte[] GerarDanfe(Nfce nfce, string qrCode, string chaveAcesso)
+    public byte[] GerarDanfe(string xmlAutorizado, byte[]? logo = null)
     {
-        var xmlNfe = MontarXmlNfe(nfce, chaveAcesso);
+        if (string.IsNullOrWhiteSpace(xmlAutorizado))
+            throw new ArgumentException("XML autorizado nao pode ser vazio", nameof(xmlAutorizado));
 
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xmlNfe));
-        var proc = new nfeProc();
-        proc.NFe = new global::NFe.Classes.NFe();
+        var documento = new DanfeNfceDocument(xmlAutorizado, logo);
+        documento.TamanhoImpressao(TamanhoBobina);
 
-        try
-        {
-            var danfeNfce = new global::NFe.Danfe.QuestPdf.Nfce.DanfeNfce(
-                proc,
-                new global::NFe.Danfe.QuestPdf.Nfce.ConfiguracaoDanfeNfce(
-                    global::NFe.Danfe.QuestPdf.Nfce.NfceDetalheVendaNormal.UmaLinha,
-                    global::NFe.Danfe.QuestPdf.Nfce.NfceDetalheVendaContigencia.UmaLinha,
-                    null));
-
-            return danfeNfce.GerarPDF();
-        }
-        catch (Exception)
-        {
-            return GerarDanfeSimples(nfce, qrCode, chaveAcesso);
-        }
-    }
-
-    private byte[] GerarDanfeSimples(Nfce nfce, string qrCode, string chaveAcesso)
-    {
-        return Encoding.UTF8.GetBytes(
-            $"DANFE NFC-e\nChave: {chaveAcesso}\nSerie: {nfce.Serie}\nNumero: {nfce.Numero}\nQR: {qrCode}");
-    }
-
-    private string MontarXmlNfe(Nfce nfce, string chaveAcesso)
-    {
-        return $"<nfeProc><NFe><infNFe><ide><chNFe>{chaveAcesso}</chNFe></ide></infNFe></NFe></nfeProc>";
+        return documento.GeneratePdf();
     }
 }

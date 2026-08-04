@@ -2,6 +2,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
 
+# SkiaSharp (usado pelo QuestPDF para renderizar o DANFE) precisa de fontconfig/freetype,
+# que nao vem na imagem aspnet. curl e usado pelo healthcheck do docker-compose.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libfontconfig1 curl \
+    && rm -rf /var/lib/apt/lists/*
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 

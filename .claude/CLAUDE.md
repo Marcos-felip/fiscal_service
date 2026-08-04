@@ -39,9 +39,14 @@ processa (monta XML, assina, transmite SEFAZ, gera DANFE) e devolve resultado.
 | Projeto | Pacotes |
 |---------|---------|
 | Api | MediatR, FluentValidation.AspNetCore, Serilog.AspNetCore, Swashbuckle |
-| Application | MediatR.Contracts, FluentValidation |
+| Application | MediatR, FluentValidation, FluentValidation.DependencyInjectionExtensions |
 | Domain | (nenhuma dep externa) |
-| Infrastructure | DFe.NET, QuestPDF, QRCoder |
+| Infrastructure | Zeus.Net.NFe.NFCe, Zeus.Net.NFe.Danfe.QuestPdf, QuestPDF, System.Security.Cryptography.Xml, QRCoder |
+
+> **Atencao:** o pacote `Zeus.Net.NFe.NFCe` declara **zero dependencias** para `net6.0+`.
+> Tudo que ele usa em runtime precisa ser referenciado na mao — hoje o que falta e
+> `System.Security.Cryptography.Xml` (sem ele a assinatura do XML quebra em runtime,
+> nao em compile time). Ao subir a versao do pacote, reconferir.
 
 ## Comandos
 

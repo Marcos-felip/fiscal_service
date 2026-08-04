@@ -9,7 +9,12 @@ public interface IFiscalEngine
     Task<EmitirNfceResultado> Emitir(Nfce nfce, Certificado certificado, Csc csc, Ambiente ambiente, CancellationToken ct = default);
     Task<ConsultarNfceResultado> Consultar(string chaveAcesso, Certificado certificado, Ambiente ambiente, CancellationToken ct = default);
     Task<CancelarNfceResultado> Cancelar(string chaveAcesso, string protocolo, string justificativa, Certificado certificado, Ambiente ambiente, CancellationToken ct = default);
-    Task<StatusServicoResultado> StatusServico(Ambiente ambiente, string uf, CancellationToken ct = default);
+
+    /// <summary>
+    /// Os web services da SEFAZ exigem certificado do contribuinte no handshake TLS,
+    /// inclusive para consulta de status. Por isso o certificado tambem e obrigatorio aqui.
+    /// </summary>
+    Task<StatusServicoResultado> StatusServico(Ambiente ambiente, string uf, Certificado certificado, CancellationToken ct = default);
 }
 
 public record EmitirNfceResultado(
@@ -17,7 +22,6 @@ public record EmitirNfceResultado(
     string? ChaveAcesso,
     string? Protocolo,
     string? XmlAutorizado,
-    byte[]? DanfePdf,
     string? QrCode,
     string? MotivoRejeicao,
     string? CodigoRejeicao

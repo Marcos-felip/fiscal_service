@@ -1,5 +1,6 @@
 using FiscalService.Application.Interfaces;
 using FiscalService.Application.Mappers;
+using FiscalService.Domain.ValueObjects;
 using MediatR;
 
 namespace FiscalService.Application.UseCases.StatusServico;
@@ -16,8 +17,9 @@ public class StatusServicoHandler : IRequestHandler<StatusServicoRequest, Status
     public async Task<StatusServicoResponse> Handle(StatusServicoRequest request, CancellationToken cancellationToken)
     {
         var ambiente = NfceMapper.ToAmbiente(request.Ambiente);
+        var certificado = new Certificado(request.CertificadoBase64, request.CertificadoSenha);
 
-        var resultado = await _fiscalEngine.StatusServico(ambiente, request.Uf, cancellationToken);
+        var resultado = await _fiscalEngine.StatusServico(ambiente, request.Uf, certificado, cancellationToken);
 
         return new StatusServicoResponse
         {

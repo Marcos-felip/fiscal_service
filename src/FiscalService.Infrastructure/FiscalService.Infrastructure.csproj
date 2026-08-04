@@ -10,7 +10,12 @@
   <ItemGroup>
     <PackageReference Include="Zeus.Net.NFe.NFCe" Version="2026.7.16.1250" />
     <PackageReference Include="Zeus.Net.NFe.Danfe.QuestPdf" Version="2026.7.16.1250" />
+    <!-- O pacote Zeus.Net.NFe.NFCe nao declara nenhuma dependencia para net6.0+,
+         mas DFe.Utils/NFe.Utils precisam disto em runtime para assinar o XML. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.4" />
+    <PackageReference Include="QuestPDF" Version="2024.7.3" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
   </ItemGroup>

@@ -1,3 +1,4 @@
+using FiscalService.Domain.Common;
 using FiscalService.Domain.ValueObjects;
 
 namespace FiscalService.Domain.Entities;
@@ -8,13 +9,13 @@ public class NfceItem : BaseEntity
     public string CodigoProduto { get; private set; } = string.Empty;
     public string Descricao { get; private set; } = string.Empty;
     public string Ncm { get; private set; } = string.Empty;
-    public string? Cest { get; private set; }
+    public string? Cest { get; init; }
     public string Cfop { get; private set; } = string.Empty;
     public string UnidadeComercial { get; private set; } = string.Empty;
     public decimal Quantidade { get; private set; }
     public decimal ValorUnitario { get; private set; }
     public decimal ValorTotal { get; private set; }
-    public string? Gtin { get; private set; }
+    public string? Gtin { get; init; }
     public int Origem { get; private set; }
     public string Csosn { get; private set; } = string.Empty;
 

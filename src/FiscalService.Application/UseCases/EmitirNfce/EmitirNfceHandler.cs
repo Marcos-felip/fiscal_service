@@ -37,14 +37,15 @@ public class EmitirNfceHandler : IRequestHandler<EmitirNfceRequest, EmitirNfceRe
             };
         }
 
-        var danfePdf = resultado.DanfePdf ?? _danfeGenerator.GerarDanfe(nfce, resultado.QrCode!, resultado.ChaveAcesso!);
+        var xmlAutorizado = resultado.XmlAutorizado!;
+        var danfePdf = _danfeGenerator.GerarDanfe(xmlAutorizado);
 
         return new EmitirNfceResponse
         {
             Sucesso = true,
             ChaveAcesso = resultado.ChaveAcesso,
             Protocolo = resultado.Protocolo,
-            XmlAutorizadoBase64 = resultado.XmlAutorizado != null ? Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(resultado.XmlAutorizado)) : null,
+            XmlAutorizadoBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(xmlAutorizado)),
             DanfeBase64 = Convert.ToBase64String(danfePdf),
             QrCode = resultado.QrCode
         };

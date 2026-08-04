@@ -1,3 +1,4 @@
+using FiscalService.Domain.Common;
 using FiscalService.Domain.Enums;
 
 namespace FiscalService.Domain.Entities;
