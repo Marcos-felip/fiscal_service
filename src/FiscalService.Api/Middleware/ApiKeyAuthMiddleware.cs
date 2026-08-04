@@ -1,4 +1,6 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -61,7 +63,7 @@ public class ApiKeyAuthMiddleware
         }
 
         if (!context.Request.Headers.TryGetValue(apiKeyHeaderName, out var providedApiKey) ||
-            providedApiKey != expectedApiKey)
+            !ChaveConfere(providedApiKey.ToString(), expectedApiKey))
         {
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             context.Response.ContentType = "application/json";
@@ -70,5 +72,22 @@ public class ApiKeyAuthMiddleware
         }
 
         await _next(context);
+    }
+
+    /// <summary>
+    /// Compara em tempo constante, para nao vazar a chave por timing.
+    /// As chaves sao reduzidas a SHA-256 antes da comparacao porque
+    /// <see cref="CryptographicOperations.FixedTimeEquals"/> retorna de imediato quando os
+    /// tamanhos diferem — o hash deixa os dois lados sempre com 32 bytes.
+    /// </summary>
+    private static bool ChaveConfere(string fornecida, string esperada)
+    {
+        Span<byte> hashFornecida = stackalloc byte[32];
+        Span<byte> hashEsperada = stackalloc byte[32];
+
+        SHA256.HashData(Encoding.UTF8.GetBytes(fornecida), hashFornecida);
+        SHA256.HashData(Encoding.UTF8.GetBytes(esperada), hashEsperada);
+
+        return CryptographicOperations.FixedTimeEquals(hashFornecida, hashEsperada);
     }
 }
