@@ -6,7 +6,9 @@ namespace FiscalService.Application.UseCases.EmitirNfce;
 public class EmitirNfceRequest : IRequest<EmitirNfceResponse>
 {
     public EmitenteDto Emitente { get; set; } = null!;
-    public DestinatarioDto Destinatario { get; set; } = null!;
+
+    /// <summary>Opcional: na NFC-e o consumidor pode nao se identificar.</summary>
+    public DestinatarioDto? Destinatario { get; set; }
     public List<ItemNfceDto> Itens { get; set; } = new();
     public List<PagamentoDto> Pagamentos { get; set; } = new();
     public decimal ValorTotal { get; set; }

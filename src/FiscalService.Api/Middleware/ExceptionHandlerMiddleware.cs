@@ -22,6 +22,16 @@ public class ExceptionHandlerMiddleware
         {
             await _next(context);
         }
+        catch (FluentValidation.ValidationException ex)
+        {
+            var erros = ex.Errors
+                .Select(e => new { campo = e.PropertyName, mensagem = e.ErrorMessage })
+                .ToArray();
+
+            _logger.LogWarning("Payload invalido: {Quantidade} erro(s) de validacao", erros.Length);
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            await WriteErrorResponse(context, "VALIDACAO", "Payload invalido", erros);
+        }
         catch (Domain.Exceptions.FiscalRejectionException ex)
         {
             _logger.LogWarning(ex, "Rejeicao fiscal");
@@ -48,10 +58,14 @@ public class ExceptionHandlerMiddleware
         }
     }
 
-    private static async Task WriteErrorResponse(HttpContext context, string codigo, string mensagem)
+    private static async Task WriteErrorResponse(
+        HttpContext context,
+        string codigo,
+        string mensagem,
+        object? erros = null)
     {
         context.Response.ContentType = "application/json";
-        var response = new { codigo, mensagem, timestamp = DateTime.UtcNow };
+        var response = new { codigo, mensagem, erros, timestamp = DateTime.UtcNow };
         await context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
 }

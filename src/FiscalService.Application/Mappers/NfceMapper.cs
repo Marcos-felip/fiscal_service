@@ -103,23 +103,62 @@ public static class NfceMapper
 
     public static Ambiente ToAmbiente(string ambiente)
     {
-        return ambiente.ToLowerInvariant() switch
+        return TryToAmbiente(ambiente, out var valor)
+            ? valor
+            : throw new ArgumentException($"Ambiente invalido: {ambiente}");
+    }
+
+    /// <summary>Usado tambem pelos validators, para nao duplicar a lista de valores aceitos.</summary>
+    public static bool TryToAmbiente(string? ambiente, out Ambiente valor)
+    {
+        switch (ambiente?.Trim().ToLowerInvariant())
         {
-            "producao" or "produção" or "1" => Ambiente.Producao,
-            "homologacao" or "homologação" or "2" => Ambiente.Homologacao,
-            _ => throw new ArgumentException($"Ambiente invalido: {ambiente}")
-        };
+            case "producao":
+            case "produção":
+            case "1":
+                valor = Ambiente.Producao;
+                return true;
+            case "homologacao":
+            case "homologação":
+            case "2":
+                valor = Ambiente.Homologacao;
+                return true;
+            default:
+                valor = default;
+                return false;
+        }
     }
 
     public static Crt ToCrt(string crt)
     {
-        return crt.Trim().ToLowerInvariant() switch
+        return TryToCrt(crt, out var valor)
+            ? valor
+            : throw new ArgumentException($"CRT invalido: {crt}");
+    }
+
+    public static bool TryToCrt(string? crt, out Crt valor)
+    {
+        switch (crt?.Trim().ToLowerInvariant())
         {
-            "1" or "simplesnacional" or "simples_nacional" => Crt.SimplesNacional,
-            "2" or "simplesnacionalexcessosublimite" or "simples_nacional_excesso" => Crt.SimplesNacionalExcessoSublimite,
-            "3" or "regimenormal" or "regime_normal" => Crt.RegimeNormal,
-            _ => throw new ArgumentException($"CRT invalido: {crt}")
-        };
+            case "1":
+            case "simplesnacional":
+            case "simples_nacional":
+                valor = Crt.SimplesNacional;
+                return true;
+            case "2":
+            case "simplesnacionalexcessosublimite":
+            case "simples_nacional_excesso":
+                valor = Crt.SimplesNacionalExcessoSublimite;
+                return true;
+            case "3":
+            case "regimenormal":
+            case "regime_normal":
+                valor = Crt.RegimeNormal;
+                return true;
+            default:
+                valor = default;
+                return false;
+        }
     }
 
     private static string SomenteDigitos(string? valor)

@@ -2,26 +2,16 @@ using FiscalService.Application.Mappers;
 using FiscalService.Application.Validators;
 using FluentValidation;
 
-namespace FiscalService.Application.UseCases.CancelarNfce;
+namespace FiscalService.Application.UseCases.ConsultarNfce;
 
-public class CancelarNfceValidator : AbstractValidator<CancelarNfceRequest>
+public class ConsultarNfceValidator : AbstractValidator<ConsultarNfceRequest>
 {
-    public CancelarNfceValidator()
+    public ConsultarNfceValidator()
     {
         RuleFor(x => x.ChaveAcesso)
             .NotEmpty().WithMessage("Chave de acesso e obrigatoria")
             .Must(ValidacoesFiscais.ChaveAcessoValida)
             .WithMessage("Chave de acesso invalida: deve ter 44 digitos e digito verificador correto");
-
-        RuleFor(x => x.ProtocoloAutorizacao)
-            .NotEmpty().WithMessage("Protocolo de autorizacao e obrigatorio")
-            .Must(p => ValidacoesFiscais.SomenteDigitos(p).Length == 15)
-            .WithMessage("Protocolo de autorizacao deve ter 15 digitos");
-
-        RuleFor(x => x.Justificativa)
-            .NotEmpty().WithMessage("Justificativa e obrigatoria")
-            .MinimumLength(15).WithMessage("Justificativa deve ter no minimo 15 caracteres")
-            .MaximumLength(255).WithMessage("Justificativa deve ter no maximo 255 caracteres");
 
         RuleFor(x => x.CertificadoBase64)
             .NotEmpty().WithMessage("Certificado e obrigatorio");

@@ -9,6 +9,13 @@ builder.Host.UseSerilog((context, config) =>
     config.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddControllers();
+
+// A validacao de payload e do ValidationBehavior (FluentValidation, mensagens em PT-BR).
+// Sem isto o [ApiController] responderia antes, com o formato e o idioma dele.
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
