@@ -48,8 +48,11 @@ cp .env.example .env
 | `FISCAL_SERVICE_PORT` | não | `8080` | Porta publicada no host |
 | `ASPNETCORE_ENVIRONMENT` | não | `Development` | `Development` habilita o Swagger |
 
-> ⚠️ **Se a chave ficar vazia, o middleware libera todas as rotas sem autenticação.**
-> Nunca suba em produção sem `FISCAL_API_KEY` definida.
+> ⚠️ **Sem `FISCAL_API_KEY` definida o serviço não sobe.** É proposital: o middleware
+> falha no boot em vez de deixar a API rodando sem autenticação. O log mostra:
+> ```
+> System.InvalidOperationException: 'ApiKey:Value' nao configurada.
+> ```
 
 O `.env` está no `.gitignore`. Certificados e senhas **não** ficam em configuração —
 vêm no corpo de cada request.
@@ -186,6 +189,7 @@ Todos os erros usam o mesmo envelope, com mensagens em PT-BR:
 | `CERT_INVALIDO` | 400 | Certificado ilegível, vencido ou sem chave privada |
 | `ARG_INVALIDO` | 400 | Argumento inválido |
 | `AUTH_FALHA` | 401 | `X-Api-Key` ausente ou incorreta |
+| `CONFIG_INVALIDA` | 500 | `ApiKey:Value` ficou vazia após recarga de configuração |
 | `ERRO_INTERNO` | 500 | Falha não tratada |
 
 Rejeição da SEFAZ também volta como `400`, mas com o corpo da própria resposta de
