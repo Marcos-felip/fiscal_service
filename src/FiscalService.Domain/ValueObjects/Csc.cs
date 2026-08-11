@@ -15,8 +15,8 @@ public class Csc : ValueObject
         if (string.IsNullOrWhiteSpace(idCsc))
             throw new ArgumentException("Id CSC nao pode ser vazio", nameof(idCsc));
 
-        Codigo = codigo;
-        IdCsc = idCsc;
+        Codigo = codigo.Trim();
+        IdCsc = idCsc.Trim();
     }
 
     protected override IEnumerable<object> GetEqualityComponents()
