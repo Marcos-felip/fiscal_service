@@ -111,8 +111,10 @@ public class DFeNetAdapter : IFiscalEngine
 
             if (protocolo.cStat != 100)
             {
-                _logger.LogWarning("NFC-e rejeitada pela SEFAZ: {CStat} - {Motivo}",
-                    protocolo.cStat, protocolo.xMotivo);
+                // O qrCode carrega apenas chave, versao, tpAmb, cIdToken e o hash — nenhum
+                // segredo. E o unico jeito de diagnosticar a rejeicao 464 sem o CSC em log.
+                _logger.LogWarning("NFC-e rejeitada pela SEFAZ: {CStat} - {Motivo} | qrCode: {QrCode}",
+                    protocolo.cStat, protocolo.xMotivo, nfe.infNFeSupl?.qrCode);
 
                 return Task.FromResult(new EmitirNfceResultado(
                     Sucesso: false,
