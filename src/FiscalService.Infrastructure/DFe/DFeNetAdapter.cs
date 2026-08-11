@@ -55,6 +55,13 @@ public class DFeNetAdapter : IFiscalEngine
     private const string NomeDestinatarioHomologacao =
         "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
 
+    /// <summary>
+    /// Texto obrigatorio na descricao do primeiro item em ambiente de homologacao
+    /// (NT 2015/002). Sem ele a SEFAZ devolve a rejeicao 373.
+    /// </summary>
+    private const string DescricaoPrimeiroItemHomologacao =
+        "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
+
     private readonly ILogger<DFeNetAdapter> _logger;
 
     public DFeNetAdapter(ILogger<DFeNetAdapter> logger)
@@ -377,7 +384,9 @@ public class DFeNetAdapter : IFiscalEngine
                 },
                 emit = MontarEmitente(emitente, uf),
                 dest = MontarDestinatario(nfce, ambiente),
-                det = nfce.Itens.Select(item => MontarDetalhe(item, emitente.Crt)).ToList(),
+                det = nfce.Itens
+                    .Select((item, indice) => MontarDetalhe(item, emitente.Crt, ambiente, indice == 0))
+                    .ToList(),
                 total = MontarTotal(nfce),
                 transp = new transp { modFrete = ModalidadeFrete.mfSemFrete },
                 pag = new List<pag>
@@ -456,8 +465,16 @@ public class DFeNetAdapter : IFiscalEngine
         return dest;
     }
 
-    private static det MontarDetalhe(NfceItem item, DomainCrt crt)
+    /// <summary>
+    /// Em homologacao a descricao do primeiro item e obrigatoriamente substituida pelo texto
+    /// padrao da NT 2015/002 — os demais itens mantem a descricao original.
+    /// </summary>
+    private static det MontarDetalhe(NfceItem item, DomainCrt crt, Ambiente ambiente, bool primeiroItem)
     {
+        var descricao = ambiente == Ambiente.Homologacao && primeiroItem
+            ? DescricaoPrimeiroItemHomologacao
+            : item.Descricao;
+
         return new det
         {
             nItem = item.NumeroItem,
@@ -465,7 +482,7 @@ public class DFeNetAdapter : IFiscalEngine
             {
                 cProd = item.CodigoProduto,
                 cEAN = string.IsNullOrWhiteSpace(item.Gtin) ? "SEM GTIN" : item.Gtin,
-                xProd = item.Descricao,
+                xProd = descricao,
                 NCM = item.Ncm,
                 CEST = item.Cest,
                 CFOP = int.Parse(item.Cfop),
