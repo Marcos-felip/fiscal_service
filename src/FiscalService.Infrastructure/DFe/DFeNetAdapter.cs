@@ -610,6 +610,7 @@ public class DFeNetAdapter : IFiscalEngine
         DomainCrt.SimplesNacional => CRT.SimplesNacional,
         DomainCrt.SimplesNacionalExcessoSublimite => CRT.SimplesNacionalExcessoSublimite,
         DomainCrt.RegimeNormal => CRT.RegimeNormal,
+        DomainCrt.SimplesNacionalMei => CRT.SimplesNacionalMei,
         _ => throw new ArgumentException($"CRT invalido: {crt}")
     };
 

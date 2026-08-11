@@ -155,6 +155,12 @@ public static class NfceMapper
             case "regime_normal":
                 valor = Crt.RegimeNormal;
                 return true;
+            case "4":
+            case "simplesnacionalmei":
+            case "simples_nacional_mei":
+            case "mei":
+                valor = Crt.SimplesNacionalMei;
+                return true;
             default:
                 valor = default;
                 return false;

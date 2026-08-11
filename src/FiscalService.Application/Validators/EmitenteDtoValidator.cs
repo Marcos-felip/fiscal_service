@@ -26,7 +26,7 @@ public class EmitenteDtoValidator : AbstractValidator<EmitenteDto>
         RuleFor(x => x.Crt)
             .NotEmpty().WithMessage("CRT do emitente e obrigatorio")
             .Must(crt => NfceMapper.TryToCrt(crt, out _))
-            .WithMessage("CRT invalido. Use 1 (Simples Nacional), 2 (Simples Nacional - excesso de sublimite) ou 3 (Regime Normal)");
+            .WithMessage("CRT invalido. Use 1 (Simples Nacional), 2 (Simples Nacional - excesso de sublimite), 3 (Regime Normal) ou 4 (Simples Nacional - MEI)");
 
         // Endereco: o adapter usa todos estes campos para montar o grupo enderEmit.
         RuleFor(x => x.Logradouro)
