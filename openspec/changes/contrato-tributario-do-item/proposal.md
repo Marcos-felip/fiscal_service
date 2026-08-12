@@ -46,9 +46,9 @@ interestadual não tem como destacar ICMS.
   ICMS `00`, `10`, `20`, `51`, `60`, `70`, `90`.
 - **Grupos de valor que hoje não existem**: `ICMSST` (substituição), FCP,
   partilha interestadual e crédito do Simples (`pCredSN`/`vCredICMSSN`).
-- **Compatibilidade durante a transição**: item sem bloco tributário continua
-  aceito por uma versão, resolvido pela regra atual, e registrado em log como
-  contrato antigo. A remoção do fallback é tarefa própria, no fim desta change.
+- **Sem fallback.** O bloco tributário é obrigatório, e `origem`/`csosn` saem do nível
+  do item. O fallback temporário chegou a ser implementado, mas o backend passou a
+  publicar o bloco na mesma janela — não havia ninguém no caminho antigo para proteger.
 - **A validação de coerência sai do motor.** Recusar CST incompatível com o
   regime deixa de ser regra escondida no C# e vira validação declarada sobre o
   quadro recebido: se veio base sem alíquota, se veio valor que não fecha com
@@ -75,8 +75,8 @@ motor a ser especificada. As capabilities anteriores nunca foram registradas. --
   tradução; `ValidacoesFiscais` deixa de ter lista curta de CST suportado.
 - `FiscalService.Application/UseCases/EmitirNfce/EmitirNfceValidator.cs`: valida
   a coerência do quadro em vez de restringir o conjunto de códigos.
-- **Mudança de contrato**: é a primeira quebra desde a Fase A. Por isso o
-  fallback temporário — backend e motor não sobem no mesmo instante.
+- **Mudança de contrato**: é a primeira quebra desde a Fase A, e é uma quebra
+  assumida — motor e backend sobem juntos.
 - **Este repositório não tem nenhum teste** (`tests/` só tem andaime). Esta
   change cria os primeiros: são regras fiscais, e regra fiscal sem teste é
   rejeição em produção.

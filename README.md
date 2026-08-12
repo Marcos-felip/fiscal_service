@@ -8,6 +8,11 @@ assina, transmite para a SEFAZ, gera o DANFE e devolve o resultado. Não persist
 Quem orquestra o domínio fiscal (fila, numeração, storage) é o backend NestJS —
 este serviço apenas executa a emissão.
 
+**O motor não decide imposto.** Situação tributária, base de cálculo, alíquota e valores vêm
+prontos no payload; aqui eles só viram grupo de XML. O motor recusa o quadro que não consegue
+montar corretamente, nunca a situação tributária que apenas não esperava. Ver
+[`docs/CONTRATO_TRIBUTARIO.md`](docs/CONTRATO_TRIBUTARIO.md).
+
 ---
 
 ## Requisitos
@@ -137,8 +142,11 @@ curl -X POST http://localhost:8080/api/nfce/emit \
         "quantidade": 2,
         "valorUnitario": 5.50,
         "gtin": "7891000100103",
-        "origem": 0,
-        "csosn": "102"
+        "imposto": {
+          "icms":   { "situacao": "102", "origem": 0 },
+          "pis":    { "situacao": "01", "vBC": 11.00, "pPIS": 1.65, "vPIS": 0.18 },
+          "cofins": { "situacao": "01", "vBC": 11.00, "pCOFINS": 7.60, "vCOFINS": 0.84 }
+        }
       }
     ],
     "pagamentos": [{ "tipo": "pix", "valor": 11.00 }],
@@ -168,6 +176,10 @@ Resposta de sucesso:
 
 `destinatario` é **opcional** — na NFC-e o consumidor pode não se identificar.
 
+`itens[].imposto` carrega o quadro tributário do item: `icms`, `pis` e `cofins` obrigatórios,
+`ipi` opcional. Os campos, as situações aceitas e o que é recusado estão em
+[`docs/CONTRATO_TRIBUTARIO.md`](docs/CONTRATO_TRIBUTARIO.md).
+
 ### Valores aceitos
 
 - `ambiente`: `producao` | `homologacao`
@@ -175,6 +187,12 @@ Resposta de sucesso:
 - `pagamentos[].tipo`: `dinheiro`, `cheque`, `cartao_credito`, `cartao_debito`,
   `credito_loja`, `pix`, `boleto`, `vale_alimentacao`, `vale_refeicao`,
   `vale_presente`, `vale_combustivel`, `sem_pagamento`, `outro`
+- `imposto.icms.situacao`: CSOSN `101`, `102`, `103`, `201`, `202`, `203`, `300`, `400`,
+  `500`, `900` (Simples Nacional) ou CST `00`, `10`, `20`, `30`, `40`, `41`, `50`, `51`,
+  `60`, `70`, `90` (Regime Normal)
+- `imposto.pis.situacao` / `imposto.cofins.situacao`: CST `01` a `09`, `49`, `50`–`56`,
+  `60`–`67`, `70`–`75`, `98`, `99`
+- `imposto.ipi.situacao`: CST `00`–`05`, `49`–`55`, `99`
 
 ---
 
@@ -214,11 +232,12 @@ emissão — `sucesso: false` e o bloco `rejeicao` com o código e o motivo do f
 
 ## Limitações conhecidas
 
-- **Tributação sem valores.** O payload traz apenas origem e CSOSN/CST, sem base de
-  cálculo ou alíquota. Só são aceitas as situações que se resolvem sem esses campos:
-  CSOSN `102`, `103`, `300`, `400`, `500` (Simples Nacional) e CST `40`, `41`, `50`
-  (Regime Normal). As demais são rejeitadas na validação em vez de emitir imposto zerado.
-- **PIS/COFINS** saem como CST `07` (isenta), única opção possível sem dados de cálculo.
+- **O motor não calcula imposto.** Base, alíquota e valor vêm prontos. Item com base e
+  alíquota mas sem o valor é recusado por campo faltante — o motor não completa a conta.
+- **Partilha interestadual não é suportada** (`ICMSPart`, `ICMSUFDest`). A NFC-e deste
+  serviço é sempre operação interna: `idDest` é fixo em interna e o CFOP é validado como
+  `5xxx`.
+- **IBS e CBS** ainda não são emitidos — etapa própria do roteiro fiscal.
 - **`status-servico` exige certificado** — a SEFAZ pede certificado no handshake TLS
   mesmo para consultar disponibilidade.
 - **Numeração é responsabilidade do backend NestJS.** Este serviço recebe `serie` e
@@ -231,12 +250,12 @@ emissão — `sucesso: false` e o bloco `rejeicao` com o código e o motivo do f
 ```bash
 dotnet build                                 # compila a solution
 dotnet run --project src/FiscalService.Api   # sobe a API (exige runtime .NET 8)
-dotnet test                                  # exige runtime .NET 8; ainda sem testes escritos
+dotnet test                                  # exige runtime .NET 8
 docker compose up --build
 ```
 
-Os projetos em `tests/` já estão configurados com xUnit, Moq e FluentAssertions,
-mas ainda não têm nenhum caso de teste.
+Os testes de unidade cobrem a tradução do quadro tributário para o XML — um caso por situação
+tributária aceita — e as regras de recusa. `FiscalService.IntegrationTests` ainda é andaime.
 
 ### Estrutura
 
@@ -245,7 +264,9 @@ src/
   FiscalService.Api             Controllers + middlewares (auth, log, exceções)
   FiscalService.Application     UseCases (MediatR), DTOs, validators, mappers
   FiscalService.Domain          Entities, value objects, enums (zero deps externas)
+    Tributacao/                 Situações tributárias, campos exigidos, coerência do quadro
   FiscalService.Infrastructure  Adapter DFe.NET, leitura de certificado, DANFE
+    DFe/TradutorImposto.cs      Quadro tributário -> grupos de imposto do XML
 ```
 
 ### Segurança

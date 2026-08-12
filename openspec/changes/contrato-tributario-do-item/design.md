@@ -53,18 +53,18 @@ emitente pode fazer.
 A regra prática: **o motor recusa o que não consegue montar corretamente, nunca o
 que não gosta.**
 
-## Compatibilidade durante a transição
+## Compatibilidade: sem fallback
 
-Backend e motor não sobem no mesmo instante. Por uma versão, item sem `imposto`
-continua aceito e cai na regra atual — ICMS por origem+CSOSN, PIS/COFINS em 07 —
-com log de contrato antigo.
+O desenho original previa aceitar item sem `imposto` por uma versão, resolvido pela
+regra antiga e registrado em log, porque backend e motor não sobem no mesmo instante.
 
-Isso não é permanente: a última tarefa desta change é remover o fallback depois
-que o backend estiver publicando o bloco. Fallback que fica é fallback que vira
-comportamento padrão, e daqui a um ano ninguém sabe por que existe.
+**Isso foi descartado durante a implementação:** o backend passou a publicar o bloco
+na mesma janela, então não há ninguém no caminho antigo para proteger. O fallback foi
+removido junto com `origem` e `csosn` no nível do item.
 
-O log é o que torna a remoção segura: dá para conferir se ainda chega alguém pelo
-caminho antigo antes de apagar.
+A troca é uma quebra de contrato assumida, não uma transição. Fallback que fica é
+fallback que vira comportamento padrão, e daqui a um ano ninguém sabe por que existe —
+não colocar é melhor do que remover depois.
 
 ## Testes: os primeiros do repositório
 
@@ -77,7 +77,7 @@ O mínimo:
 
 - Um teste por CST/CSOSN suportado, conferindo o grupo XML gerado
 - Quadro incoerente recusado com mensagem clara
-- Item sem `imposto` resolvido pelo fallback enquanto ele existir
+- Item sem `imposto` recusado
 - O caso da nota 7 (CSOSN 102, sem valores) continuando a gerar XML idêntico ao
   de hoje — regressão do que já funciona
 

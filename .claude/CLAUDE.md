@@ -64,6 +64,28 @@ O NestJS chama este servico com:
 - Body JSON com todos os dados da NFC-e (emitente, destinatario, itens, pagamentos, certificado base64+senha, CSC, ambiente, serie, numero)
 - Espera resposta com: sucesso/rejeicao, chave de acesso, protocolo, XML autorizado (base64), DANFE PDF (base64), QR Code
 
+### Contrato tributario do item
+
+Cada item traz o bloco `imposto` com `icms`, `pis`, `cofins` e, opcionalmente, `ipi` —
+situacao tributaria, base de calculo, aliquota e valores. Ver `docs/CONTRATO_TRIBUTARIO.md`
+para os campos, as situacoes aceitas e as regras de recusa.
+
+Onde o codigo mora:
+
+| Camada | Onde |
+|---|---|
+| DTOs | `Application/DTOs/ImpostoDto.cs`, `IcmsDto`, `PisDto`, `CofinsDto`, `IpiDto` |
+| Situacoes e tabela de campos obrigatorios | `Domain/Tributacao/SituacaoIcms.cs` e irmaos |
+| Validacao de coerencia | `Domain/Tributacao/ValidacaoQuadroTributario.cs` |
+| Traducao para o XML | `Infrastructure/DFe/TradutorImposto.cs` |
+
+O bloco `imposto` e **obrigatorio** em todo item. A situacao tributaria e a origem da
+mercadoria vem de dentro dele — nao existe mais `origem`/`csosn` no nivel do item.
+
+**Aceitar uma situacao tributaria nova e mexer numa linha da tabela em `SituacaoIcms`, mais o
+grupo correspondente em `TradutorImposto`.** Se voce se pegar escrevendo `if` de situacao
+tributaria no adapter, e sinal de que a regra foi para o lugar errado.
+
 ## Regras criticas
 
 1. **Stateless**: nao persiste nada. Toda informacao vem por request.
@@ -71,3 +93,6 @@ O NestJS chama este servico com:
 3. **SEFAZ pode ser lenta/indisponivel**: o NestJS trata timeout/retry, este servico apenas retorna o resultado.
 4. **Ambiente**: `producao` (1) ou `homologacao` (2) — sempre recebido por request.
 5. **Numeracao**: responsabilidade do NestJS (reserva atomica). Este servico recebe serie+numero ja definidos.
+6. **O motor nao decide imposto, e nao calcula.** Situacao tributaria e valores vem prontos do
+   backend; aqui eles so viram grupo de XML. O motor recusa o quadro que nao consegue montar
+   corretamente — nunca a situacao tributaria que apenas nao esperava.

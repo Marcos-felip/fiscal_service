@@ -56,14 +56,13 @@ tributária apenas por não ser a esperada.
 - **WHEN** um item chega com PIS calculado por quantidade (`qBCProd` e `vAliqProd`)
 - **THEN** o XML é montado por quantidade, sem exigir alíquota percentual
 
-### Requirement: Compatibilidade temporária com o contrato antigo
-Enquanto o fallback existir, o motor SHALL aceitar item sem o bloco tributário,
-resolvendo-o pela regra anterior, e SHALL registrar em log que a requisição usou
-o contrato antigo.
+### Requirement: O quadro tributário é obrigatório
+O motor SHALL recusar item que chegue sem o bloco tributário. O contrato SHALL NOT
+aceitar situação tributária nem origem da mercadoria fora desse bloco.
 
 #### Scenario: Item sem bloco tributário
-- **WHEN** um item chega sem o bloco de imposto, apenas com origem e CSOSN
-- **THEN** o XML é montado pela regra anterior e o log registra o uso do contrato antigo
+- **WHEN** um item chega sem o bloco de imposto
+- **THEN** a emissão é recusada indicando que o quadro tributário é obrigatório
 
 #### Scenario: Regressão da emissão atual
 - **WHEN** uma nota é emitida com CSOSN 102 e sem valores, como as de hoje
