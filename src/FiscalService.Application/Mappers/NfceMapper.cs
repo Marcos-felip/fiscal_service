@@ -92,8 +92,7 @@ public static class NfceMapper
             dto.UnidadeComercial,
             dto.Quantidade,
             dto.ValorUnitario,
-            dto.Origem,
-            dto.Csosn
+            ImpostoMapper.ToDomain(dto.Imposto)
         )
         {
             Cest = dto.Cest,

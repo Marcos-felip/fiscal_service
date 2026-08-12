@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FiscalService.Application\FiscalService.Application.csproj" />
     <ProjectReference Include="..\..\src\FiscalService.Domain\FiscalService.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FiscalService.Infrastructure\FiscalService.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

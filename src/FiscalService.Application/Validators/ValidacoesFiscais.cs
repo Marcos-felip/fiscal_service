@@ -12,14 +12,8 @@ public static class ValidacoesFiscais
         "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
     };
 
-    /// <summary>
-    /// CSOSN aceitos pelo adapter (Simples Nacional). Os demais exigem base de calculo
-    /// e aliquota, que nao vem no payload.
-    /// </summary>
-    public static readonly string[] CsosnSuportados = { "102", "103", "300", "400", "500" };
-
-    /// <summary>CST de ICMS aceitos pelo adapter (Regime Normal), pelo mesmo motivo.</summary>
-    public static readonly string[] CstIcmsSuportados = { "40", "41", "50" };
+    // Nao ha mais lista de CST/CSOSN suportado aqui: quais situacoes tributarias existem e
+    // o que cada uma exige e regra de dominio, em FiscalService.Domain.Tributacao.
 
     public static string SomenteDigitos(string? valor)
     {

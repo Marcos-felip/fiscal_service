@@ -13,10 +13,6 @@ using NFe.Classes.Informacoes;
 using NFe.Classes.Informacoes.Destinatario;
 using NFe.Classes.Informacoes.Detalhe;
 using NFe.Classes.Informacoes.Detalhe.Tributacao;
-using NFe.Classes.Informacoes.Detalhe.Tributacao.Estadual;
-using NFe.Classes.Informacoes.Detalhe.Tributacao.Estadual.Tipos;
-using NFe.Classes.Informacoes.Detalhe.Tributacao.Federal;
-using NFe.Classes.Informacoes.Detalhe.Tributacao.Federal.Tipos;
 using NFe.Classes.Informacoes.Emitente;
 using NFe.Classes.Informacoes.Identificacao;
 using NFe.Classes.Informacoes.Identificacao.Tipos;
@@ -387,7 +383,7 @@ public class DFeNetAdapter : IFiscalEngine
                 emit = MontarEmitente(emitente, uf),
                 dest = MontarDestinatario(nfce, ambiente),
                 det = nfce.Itens
-                    .Select((item, indice) => MontarDetalhe(item, emitente.Crt, ambiente, indice == 0))
+                    .Select((item, indice) => MontarDetalhe(item, ambiente, indice == 0))
                     .ToList(),
                 total = MontarTotal(nfce),
                 transp = new transp { modFrete = ModalidadeFrete.mfSemFrete },
@@ -471,7 +467,7 @@ public class DFeNetAdapter : IFiscalEngine
     /// Em homologacao a descricao do primeiro item e obrigatoriamente substituida pelo texto
     /// padrao da NT 2015/002 — os demais itens mantem a descricao original.
     /// </summary>
-    private static det MontarDetalhe(NfceItem item, DomainCrt crt, Ambiente ambiente, bool primeiroItem)
+    private static det MontarDetalhe(NfceItem item, Ambiente ambiente, bool primeiroItem)
     {
         var descricao = ambiente == Ambiente.Homologacao && primeiroItem
             ? DescricaoPrimeiroItemHomologacao
@@ -498,68 +494,9 @@ public class DFeNetAdapter : IFiscalEngine
                 vUnTrib = item.ValorUnitario,
                 indTot = IndicadorTotal.ValorDoItemCompoeTotalNF
             },
-            imposto = MontarImposto(item, crt)
-        };
-    }
-
-    /// <summary>
-    /// O payload recebido do backend traz apenas origem e CSOSN/CST — nao traz base de
-    /// calculo nem aliquotas. Por isso so sao aceitas as situacoes tributarias que se
-    /// resolvem sem valores; as demais falham explicitamente em vez de emitir imposto zerado.
-    /// </summary>
-    private static imposto MontarImposto(NfceItem item, DomainCrt crt)
-    {
-        var origem = MapearOrigem(item.Origem);
-        var codigo = (item.Csosn ?? string.Empty).Trim().PadLeft(3, '0');
-
-        ICMSBasico icms = crt == DomainCrt.RegimeNormal
-            ? MontarIcmsRegimeNormal(codigo, origem)
-            : MontarIcmsSimplesNacional(codigo, origem);
-
-        return new imposto
-        {
-            ICMS = new ICMS { TipoICMS = icms },
-            // Sem dados de PIS/COFINS no payload, a unica emissao possivel sem inventar
-            // base de calculo e a nao tributada (CST 07 - operacao isenta da contribuicao).
-            PIS = new PIS { TipoPIS = new PISNT { CST = CSTPIS.pis07 } },
-            COFINS = new COFINS { TipoCOFINS = new COFINSNT { CST = CSTCOFINS.cofins07 } }
-        };
-    }
-
-    private static ICMSBasico MontarIcmsSimplesNacional(string csosn, OrigemMercadoria origem)
-    {
-        return csosn switch
-        {
-            "102" or "103" or "300" or "400" => new ICMSSN102
-            {
-                orig = origem,
-                CSOSN = MapearCsosn(csosn)
-            },
-            "500" => new ICMSSN500
-            {
-                orig = origem,
-                CSOSN = Csosnicms.Csosn500
-            },
-            _ => throw new ArgumentException(
-                $"CSOSN {csosn} exige valores de base de calculo/aliquota que nao vem no payload. " +
-                "Use 102, 103, 300, 400 ou 500.")
-        };
-    }
-
-    private static ICMSBasico MontarIcmsRegimeNormal(string cst, OrigemMercadoria origem)
-    {
-        var codigo = cst.TrimStart('0').PadLeft(2, '0');
-
-        return codigo switch
-        {
-            "40" or "41" or "50" => new ICMS40
-            {
-                orig = origem,
-                CST = MapearCsticms(codigo)
-            },
-            _ => throw new ArgumentException(
-                $"CST {codigo} exige valores de base de calculo/aliquota que nao vem no payload. " +
-                "Use 40, 41 ou 50.")
+            // Quem decide a situacao tributaria e os valores e o backend: o item chega com o
+            // quadro pronto e aqui ele so vira grupo de XML.
+            imposto = TradutorImposto.Montar(item)
         };
     }
 
@@ -631,38 +568,6 @@ public class DFeNetAdapter : IFiscalEngine
         DomainCrt.RegimeNormal => CRT.RegimeNormal,
         DomainCrt.SimplesNacionalMei => CRT.SimplesNacionalMei,
         _ => throw new ArgumentException($"CRT invalido: {crt}")
-    };
-
-    private static OrigemMercadoria MapearOrigem(int origem) => origem switch
-    {
-        0 => OrigemMercadoria.OmNacional,
-        1 => OrigemMercadoria.OmEstrangeiraImportacaoDireta,
-        2 => OrigemMercadoria.OmEstrangeiraAdquiridaBrasil,
-        3 => OrigemMercadoria.OmNacionalConteudoImportacaoSuperior40,
-        4 => OrigemMercadoria.OmNacionalProcessosBasicos,
-        5 => OrigemMercadoria.OmNacionalConteudoImportacaoInferiorIgual40,
-        6 => OrigemMercadoria.OmEstrangeiraImportacaoDiretaSemSimilar,
-        7 => OrigemMercadoria.OmEstrangeiraAdquiridaBrasilSemSimilar,
-        8 => OrigemMercadoria.OmNacionalConteudoImportacaoSuperior70,
-        _ => throw new ArgumentException($"Origem da mercadoria invalida: {origem}")
-    };
-
-    private static Csosnicms MapearCsosn(string csosn) => csosn switch
-    {
-        "102" => Csosnicms.Csosn102,
-        "103" => Csosnicms.Csosn103,
-        "300" => Csosnicms.Csosn300,
-        "400" => Csosnicms.Csosn400,
-        "500" => Csosnicms.Csosn500,
-        _ => throw new ArgumentException($"CSOSN invalido: {csosn}")
-    };
-
-    private static Csticms MapearCsticms(string cst) => cst switch
-    {
-        "40" => Csticms.Cst40,
-        "41" => Csticms.Cst41,
-        "50" => Csticms.Cst50,
-        _ => throw new ArgumentException($"CST invalido: {cst}")
     };
 
     private static Estado ParseEstado(string uf)

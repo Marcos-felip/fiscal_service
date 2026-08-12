@@ -1,14 +1,14 @@
 using FiscalService.Application.Mappers;
 using FiscalService.Application.Validators;
-using FiscalService.Domain.Enums;
+using FiscalService.Domain.Common;
 using FluentValidation;
 
 namespace FiscalService.Application.UseCases.EmitirNfce;
 
 public class EmitirNfceValidator : AbstractValidator<EmitirNfceRequest>
 {
-    /// <summary>Tolerancia para diferenca de arredondamento em somatorios (1 centavo).</summary>
-    private const decimal ToleranciaCentavos = 0.01m;
+    /// <summary>Mesma tolerancia usada na conferencia do quadro tributario (1 centavo).</summary>
+    private const decimal ToleranciaCentavos = ToleranciaFiscal.Centavos;
 
     public EmitirNfceValidator()
     {
@@ -79,15 +79,6 @@ public class EmitirNfceValidator : AbstractValidator<EmitirNfceRequest>
             .When(x => x.Itens.Count > 0 && x.Pagamentos.Count > 0)
             .WithMessage(x =>
                 $"Soma dos pagamentos ({SomaPagamentos(x):F2}) diverge do total da nota ({SomaItens(x):F2})");
-
-        // A situacao tributaria depende do regime do emitente, e nem toda combinacao
-        // e representavel com os campos que o payload traz.
-        RuleForEach(x => x.Itens)
-            .Must((request, item) => TributacaoSuportada(request, item.Csosn))
-            .When(x => x.Emitente is not null
-                       && NfceMapper.TryToCrt(x.Emitente.Crt, out _)
-                       && x.Itens.All(i => !string.IsNullOrWhiteSpace(i.Csosn)))
-            .WithMessage((request, item) => MensagemTributacao(request, item.Csosn));
     }
 
     private static decimal SomaItens(EmitirNfceRequest x)
@@ -101,29 +92,6 @@ public class EmitirNfceValidator : AbstractValidator<EmitirNfceRequest>
 
     private static bool SomaDosPagamentosBateComTotal(EmitirNfceRequest x)
         => Math.Abs(SomaPagamentos(x) - SomaItens(x)) <= ToleranciaCentavos;
-
-    private static bool TributacaoSuportada(EmitirNfceRequest request, string codigo)
-    {
-        NfceMapper.TryToCrt(request.Emitente.Crt, out var crt);
-
-        return crt == Crt.RegimeNormal
-            ? ValidacoesFiscais.CstIcmsSuportados.Contains(NormalizarCst(codigo))
-            : ValidacoesFiscais.CsosnSuportados.Contains(codigo.Trim().PadLeft(3, '0'));
-    }
-
-    private static string MensagemTributacao(EmitirNfceRequest request, string codigo)
-    {
-        NfceMapper.TryToCrt(request.Emitente.Crt, out var crt);
-
-        return crt == Crt.RegimeNormal
-            ? $"CST '{codigo}' nao e suportado: o payload nao traz base de calculo nem aliquota. " +
-              $"Valores aceitos: {string.Join(", ", ValidacoesFiscais.CstIcmsSuportados)}"
-            : $"CSOSN '{codigo}' nao e suportado: o payload nao traz base de calculo nem aliquota. " +
-              $"Valores aceitos: {string.Join(", ", ValidacoesFiscais.CsosnSuportados)}";
-    }
-
-    private static string NormalizarCst(string codigo)
-        => codigo.Trim().TrimStart('0').PadLeft(2, '0');
 
     private static bool SerBase64(string valor)
         => !string.IsNullOrEmpty(valor)

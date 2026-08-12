@@ -46,10 +46,11 @@ public class ItemNfceDtoValidator : AbstractValidator<ItemNfceDto>
             .Must(ValidacoesFiscais.GtinValido)
             .WithMessage("GTIN invalido: deve ter 8, 12, 13 ou 14 digitos e digito verificador correto");
 
-        RuleFor(x => x.Origem)
-            .InclusiveBetween(0, 8).WithMessage("Origem da mercadoria deve estar entre 0 e 8");
+        RuleFor(x => x.Imposto)
+            .NotNull().WithMessage("Quadro tributario do item ('imposto') e obrigatorio");
 
-        RuleFor(x => x.Csosn)
-            .NotEmpty().WithMessage("CSOSN/CST do item e obrigatorio");
+        RuleFor(x => x.Imposto)
+            .SetValidator(new ImpostoDtoValidator())
+            .When(x => x.Imposto is not null);
     }
 }

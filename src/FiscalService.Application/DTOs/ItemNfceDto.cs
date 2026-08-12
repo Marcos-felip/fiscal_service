@@ -1,5 +1,9 @@
 namespace FiscalService.Application.DTOs;
 
+/// <param name="Imposto">
+/// Quadro tributario do item. Obrigatorio: a situacao tributaria e a origem da mercadoria
+/// vem de dentro dele.
+/// </param>
 public record ItemNfceDto(
     int NumeroItem,
     string CodigoProduto,
@@ -11,6 +15,5 @@ public record ItemNfceDto(
     decimal Quantidade,
     decimal ValorUnitario,
     string? Gtin,
-    int Origem,
-    string Csosn
+    ImpostoDto Imposto
 );

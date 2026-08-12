@@ -1,5 +1,5 @@
 using FiscalService.Domain.Common;
-using FiscalService.Domain.ValueObjects;
+using FiscalService.Domain.Tributacao;
 
 namespace FiscalService.Domain.Entities;
 
@@ -16,11 +16,15 @@ public class NfceItem : BaseEntity
     public decimal ValorUnitario { get; private set; }
     public decimal ValorTotal { get; private set; }
     public string? Gtin { get; init; }
-    public int Origem { get; private set; }
-    public string Csosn { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Quadro tributario decidido e calculado pelo backend. E ele que manda na montagem dos
+    /// grupos de imposto — a situacao tributaria e a origem da mercadoria vem de dentro dele.
+    /// </summary>
+    public ImpostoItem Imposto { get; private set; }
 
     public NfceItem(int numeroItem, string codigoProduto, string descricao, string ncm, string cfop,
-        string unidadeComercial, decimal quantidade, decimal valorUnitario, int origem, string csosn)
+        string unidadeComercial, decimal quantidade, decimal valorUnitario, ImpostoItem imposto)
     {
         NumeroItem = numeroItem;
         CodigoProduto = codigoProduto;
@@ -31,7 +35,6 @@ public class NfceItem : BaseEntity
         Quantidade = quantidade;
         ValorUnitario = valorUnitario;
         ValorTotal = quantidade * valorUnitario;
-        Origem = origem;
-        Csosn = csosn;
+        Imposto = imposto ?? throw new ArgumentNullException(nameof(imposto));
     }
 }
