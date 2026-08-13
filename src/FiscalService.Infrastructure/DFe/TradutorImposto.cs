@@ -22,7 +22,7 @@ namespace FiscalService.Infrastructure.DFe;
 /// </summary>
 public static class TradutorImposto
 {
-    public static imposto Montar(NfceItem item) => Montar(item.Imposto);
+    public static imposto Montar(ItemFiscal item) => Montar(item.Imposto);
 
     public static imposto Montar(ImpostoItem quadro)
     {

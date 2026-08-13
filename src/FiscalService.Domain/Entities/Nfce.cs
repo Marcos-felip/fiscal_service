@@ -20,8 +20,8 @@ public class Nfce : BaseEntity
     public string? Protocolo { get; private set; }
     public DateTime? DataAutorizacao { get; private set; }
 
-    private readonly List<NfceItem> _itens = new();
-    public IReadOnlyCollection<NfceItem> Itens => _itens.AsReadOnly();
+    private readonly List<ItemFiscal> _itens = new();
+    public IReadOnlyCollection<ItemFiscal> Itens => _itens.AsReadOnly();
 
     private readonly List<Pagamento> _pagamentos = new();
     public IReadOnlyCollection<Pagamento> Pagamentos => _pagamentos.AsReadOnly();
@@ -40,7 +40,7 @@ public class Nfce : BaseEntity
         DataEmissao = dataEmissao ?? DateTimeOffset.Now;
     }
 
-    public void AdicionarItem(NfceItem item)
+    public void AdicionarItem(ItemFiscal item)
     {
         _itens.Add(item);
     }

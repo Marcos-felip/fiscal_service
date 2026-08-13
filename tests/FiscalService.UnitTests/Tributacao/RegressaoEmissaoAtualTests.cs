@@ -91,7 +91,7 @@ public class RegressaoEmissaoAtualTests
     [Fact]
     public void O_item_leva_o_quadro_ate_o_xml()
     {
-        var item = new NfceItem(
+        var item = new ItemFiscal(
             numeroItem: 1,
             codigoProduto: "PROD-1",
             descricao: "Produto",
@@ -117,7 +117,7 @@ public class RegressaoEmissaoAtualTests
     [Fact]
     public void Item_sem_quadro_tributario_nao_e_construivel()
     {
-        var erro = Assert.Throws<ArgumentNullException>(() => new NfceItem(
+        var erro = Assert.Throws<ArgumentNullException>(() => new ItemFiscal(
             numeroItem: 1,
             codigoProduto: "PROD-1",
             descricao: "Produto",

@@ -6,6 +6,7 @@ using DFe.Utils;
 using FiscalService.Application.Interfaces;
 using FiscalService.Domain.Entities;
 using FiscalService.Domain.Exceptions;
+using FiscalService.Domain.Tributacao;
 using FiscalService.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 using NFe.Classes;
@@ -385,7 +386,7 @@ public class DFeNetAdapter : IFiscalEngine
                 det = nfce.Itens
                     .Select((item, indice) => MontarDetalhe(item, ambiente, indice == 0))
                     .ToList(),
-                total = MontarTotal(nfce),
+                total = MontarTotal(nfce.Itens),
                 transp = new transp { modFrete = ModalidadeFrete.mfSemFrete },
                 pag = new List<pag>
                 {
@@ -467,7 +468,7 @@ public class DFeNetAdapter : IFiscalEngine
     /// Em homologacao a descricao do primeiro item e obrigatoriamente substituida pelo texto
     /// padrao da NT 2015/002 — os demais itens mantem a descricao original.
     /// </summary>
-    private static det MontarDetalhe(NfceItem item, Ambiente ambiente, bool primeiroItem)
+    private static det MontarDetalhe(ItemFiscal item, Ambiente ambiente, bool primeiroItem)
     {
         var descricao = ambiente == Ambiente.Homologacao && primeiroItem
             ? DescricaoPrimeiroItemHomologacao
@@ -500,33 +501,38 @@ public class DFeNetAdapter : IFiscalEngine
         };
     }
 
-    private static total MontarTotal(Nfce nfce)
+    /// <summary>
+    /// Totais somados dos itens. Frete, seguro, desconto, despesas acessorias e imposto de
+    /// importacao ficam em zero porque o contrato ainda nao os aceita — nao por escolha de
+    /// simplificar. Quando entrarem, entram aqui e em <see cref="TotaisDocumento"/> juntos.
+    /// </summary>
+    private static total MontarTotal(IEnumerable<ItemFiscal> itens)
     {
-        var valorProdutos = nfce.Itens.Sum(i => i.ValorTotal);
+        var totais = TotaisDocumento.Somar(itens);
 
         return new total
         {
             ICMSTot = new ICMSTot
             {
-                vBC = 0,
-                vICMS = 0,
+                vBC = totais.VBC,
+                vICMS = totais.VIcms,
                 vICMSDeson = 0,
-                vFCP = 0,
-                vBCST = 0,
-                vST = 0,
-                vFCPST = 0,
+                vFCP = totais.VFcp,
+                vBCST = totais.VBCST,
+                vST = totais.VST,
+                vFCPST = totais.VFcpST,
                 vFCPSTRet = 0,
-                vProd = valorProdutos,
+                vProd = totais.VProd,
                 vFrete = 0,
                 vSeg = 0,
                 vDesc = 0,
                 vII = 0,
-                vIPI = 0,
+                vIPI = totais.VIpi,
                 vIPIDevol = 0,
-                vPIS = 0,
-                vCOFINS = 0,
+                vPIS = totais.VPis,
+                vCOFINS = totais.VCofins,
                 vOutro = 0,
-                vNF = valorProdutos
+                vNF = totais.VNF
             }
         };
     }

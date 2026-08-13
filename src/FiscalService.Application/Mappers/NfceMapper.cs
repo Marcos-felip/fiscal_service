@@ -81,9 +81,9 @@ public static class NfceMapper
         return destinatario.Identificado ? destinatario : null;
     }
 
-    public static NfceItem ToItem(ItemNfceDto dto)
+    public static ItemFiscal ToItem(ItemNfceDto dto)
     {
-        return new NfceItem(
+        return new ItemFiscal(
             dto.NumeroItem,
             dto.CodigoProduto,
             dto.Descricao,

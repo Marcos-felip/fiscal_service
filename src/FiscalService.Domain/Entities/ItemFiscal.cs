@@ -3,7 +3,12 @@ using FiscalService.Domain.Tributacao;
 
 namespace FiscalService.Domain.Entities;
 
-public class NfceItem : BaseEntity
+/// <summary>
+/// Item de um documento fiscal. Serve a NFC-e e a NF-e sem diferenca: depois que o
+/// quadro tributario passou a vir pronto do backend, nao sobrou nada de especifico
+/// de modelo aqui.
+/// </summary>
+public class ItemFiscal : BaseEntity
 {
     public int NumeroItem { get; private set; }
     public string CodigoProduto { get; private set; } = string.Empty;
@@ -23,7 +28,7 @@ public class NfceItem : BaseEntity
     /// </summary>
     public ImpostoItem Imposto { get; private set; }
 
-    public NfceItem(int numeroItem, string codigoProduto, string descricao, string ncm, string cfop,
+    public ItemFiscal(int numeroItem, string codigoProduto, string descricao, string ncm, string cfop,
         string unidadeComercial, decimal quantidade, decimal valorUnitario, ImpostoItem imposto)
     {
         NumeroItem = numeroItem;
