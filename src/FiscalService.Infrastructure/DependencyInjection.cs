@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IFiscalEngine, DFeNetAdapter>();
         services.AddScoped<ICertificateService, CertificateReader>();
         services.AddScoped<IDanfeGenerator, QuestPdfDanfeGenerator>();
+        services.AddScoped<IDanfeNfeGenerator, HtmlDanfeNfeGenerator>();
 
         return services;
     }

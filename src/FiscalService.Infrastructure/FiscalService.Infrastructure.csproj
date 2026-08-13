@@ -10,6 +10,11 @@
   <ItemGroup>
     <PackageReference Include="Zeus.Net.NFe.NFCe" Version="2026.7.16.1250" />
     <PackageReference Include="Zeus.Net.NFe.Danfe.QuestPdf" Version="2026.7.16.1250" />
+    <!-- DANFE do modelo 55. O pacote QuestPdf acima so traz o cupom da NFC-e; o pacote
+         PdfClown, que traz o retrato em PDF, depende de System.Drawing.Common — Windows-only
+         no .NET 8, e o motor roda em contentor Linux. Medido, nao suposto: ver D6 no design
+         da change emitir-nfe-modelo-55. -->
+    <PackageReference Include="Zeus.Net.NFe.Danfe.Html" Version="2026.7.16.1250" />
     <!-- O pacote Zeus.Net.NFe.NFCe nao declara nenhuma dependencia para net6.0+,
          mas DFe.Utils/NFe.Utils precisam disto em runtime para assinar o XML. -->
     <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.4" />
@@ -21,6 +26,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FiscalService.Application\FiscalService.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- A montagem do XML e detalhe de implementacao, mas e o que os testes precisam afirmar:
+         conferir o XML que a SEFAZ receberia vale mais do que conferir o objeto intermediario.
+         Abrir para o projeto de teste evita tornar a montagem publica so por causa disso. -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>FiscalService.UnitTests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

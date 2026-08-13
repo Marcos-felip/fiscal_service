@@ -245,8 +245,8 @@ public static class ValidacaoQuadroTributario
 
         if (!ToleranciaFiscal.Equivalentes(esperado, valor.Value))
         {
-            erros.Add($"{rotulo}: {tagValor} informado ({valor.Value:F2}) diverge de {formula} " +
-                      $"({esperado:F2})");
+            erros.Add($"{rotulo}: {tagValor} informado ({FormatoFiscal.Valor(valor.Value)}) " +
+                      $"diverge de {formula} ({FormatoFiscal.Valor(esperado)})");
         }
     }
 
@@ -267,8 +267,8 @@ public static class ValidacaoQuadroTributario
 
         if (!ToleranciaFiscal.Equivalentes(esperado, valor.Value))
         {
-            erros.Add($"{rotulo}: {tagValor} informado ({valor.Value:F2}) diverge de {formula} " +
-                      $"({esperado:F2})");
+            erros.Add($"{rotulo}: {tagValor} informado ({FormatoFiscal.Valor(valor.Value)}) " +
+                      $"diverge de {formula} ({FormatoFiscal.Valor(esperado)})");
         }
     }
 }

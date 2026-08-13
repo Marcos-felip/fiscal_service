@@ -30,7 +30,8 @@ public class ItemNfceDtoValidator : AbstractValidator<ItemNfceDto>
         RuleFor(x => x.Cfop)
             .NotEmpty().WithMessage("CFOP do item e obrigatorio")
             .Must(ValidacoesFiscais.CfopValido)
-            .WithMessage("CFOP deve ter 4 digitos e comecar com 5 (operacao interna, exigida na NFC-e)");
+            // Vale para os dois modelos enquanto o recorte for operacao interna.
+            .WithMessage("CFOP deve ter 4 digitos e comecar com 5 (operacao interna)");
 
         RuleFor(x => x.UnidadeComercial)
             .NotEmpty().WithMessage("Unidade comercial do item e obrigatoria")

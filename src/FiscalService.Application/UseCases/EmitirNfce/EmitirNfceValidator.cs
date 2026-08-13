@@ -70,7 +70,8 @@ public class EmitirNfceValidator : AbstractValidator<EmitirNfceRequest>
             .Must((request, _) => SomaDosItensBateComTotal(request))
             .When(x => x.Itens.Count > 0 && x.ValorTotal > 0)
             .WithMessage(x =>
-                $"Valor total ({x.ValorTotal:F2}) diverge da soma dos itens ({SomaItens(x):F2})");
+                $"Valor total ({FormatoFiscal.Valor(x.ValorTotal)}) diverge da soma dos itens " +
+                $"({FormatoFiscal.Valor(SomaItens(x))})");
 
         // Sem grupo de troco no payload, o somatorio dos pagamentos tem que fechar
         // exatamente com o total da nota — caso contrario a SEFAZ rejeita.
@@ -78,7 +79,8 @@ public class EmitirNfceValidator : AbstractValidator<EmitirNfceRequest>
             .Must((request, _) => SomaDosPagamentosBateComTotal(request))
             .When(x => x.Itens.Count > 0 && x.Pagamentos.Count > 0)
             .WithMessage(x =>
-                $"Soma dos pagamentos ({SomaPagamentos(x):F2}) diverge do total da nota ({SomaItens(x):F2})");
+                $"Soma dos pagamentos ({FormatoFiscal.Valor(SomaPagamentos(x))}) diverge do total " +
+                $"da nota ({FormatoFiscal.Valor(SomaItens(x))})");
     }
 
     private static decimal SomaItens(EmitirNfceRequest x)

@@ -2,7 +2,7 @@
 
 ## Projeto
 
-Microservico .NET 8 para emissao de NFC-e (modelo 65) via DFe.NET.
+Microservico .NET 8 para emissao de NFC-e (modelo 65) e NF-e (modelo 55) via DFe.NET.
 Este servico e **stateless**: recebe payload + certificado por request,
 processa (monta XML, assina, transmite SEFAZ, gera DANFE) e devolve resultado.
 
@@ -30,7 +30,7 @@ processa (monta XML, assina, transmite SEFAZ, gera DANFE) e devolve resultado.
 - **Domain**: `BaseEntity` com `Id` + `CreatedAt` + `UpdatedAt`, `ValueObject` com equality components
 - **Exceptions de dominio**: `FiscalRejectionException` (rejeicao SEFAZ), `InvalidCertificateException` (certificado invalido)
 - **Mensagens de erro**: sempre em PT-BR
-- **Endpoints**: `/api/nfce/emit`, `/api/nfce/consulta`, `/api/nfce/cancel`, `/api/sefaz/status-servico`
+- **Endpoints**: `/api/nfce/emit`, `/api/nfce/consulta`, `/api/nfce/cancel`, `/api/nfe/emit`, `/api/nfe/consulta`, `/api/nfe/cancel`, `/api/nfe/danfe`, `/api/sefaz/status-servico`
 - **Health check**: `GET /health` (sem auth)
 - **Auth**: API Key via header `X-Api-Key` (middleware, exceto `/health` e `/swagger`)
 
@@ -72,6 +72,30 @@ mercadoria vem de dentro dele — nao existe mais `origem`/`csosn` no nivel do i
 grupo correspondente em `TradutorImposto`.** Se voce se pegar escrevendo `if` de situacao
 tributaria no adapter, e sinal de que a regra foi para o lugar errado.
 
+### Contrato da NF-e modelo 55
+
+Rotas proprias, DTO proprio, dominio proprio: `EmitirNfeRequest`, `Nfe`,
+`DestinatarioNfe`. O item e o quadro tributario sao **os mesmos** da NFC-e.
+
+Campos e recusas em [docs/CONTRATO_NFE.md](./docs/CONTRATO_NFE.md). O essencial:
+
+| | NFC-e | NF-e |
+|---|---|---|
+| Destinatario | opcional | obrigatorio e completo, com `indIEDest` |
+| CSC | obrigatorio | **recusado** |
+| QR Code | sim | nao existe |
+| `tpNF`/`finNFe`/`indFinal`/`indPres` | fixos no motor | vem do backend |
+| DANFE | PDF (cupom, QuestPDF) | **HTML** (retrato, `Zeus.Net.NFe.Danfe.Html`) |
+
+**O DANFE do modelo 55 e HTML por restricao medida, nao por preferencia:** o
+layout retrato pronto vive no pacote PdfClown, que depende de
+`System.Drawing.Common` — Windows-only no .NET 8, e o motor roda em contentor
+Linux. A resposta traz `danfeContentType` para o backend saber o que recebeu.
+
+**Recorte vigente (13/08/2026): venda interna, saida, finalidade normal,
+destinatario pessoa juridica.** O que esta fora e recusado nomeando o motivo, em
+`EmitirNfeValidator` — nunca montado por aproximacao.
+
 ## Regras criticas
 
 1. **Stateless**: nao persiste nada. Toda informacao vem por request.
@@ -82,3 +106,9 @@ tributaria no adapter, e sinal de que a regra foi para o lugar errado.
 6. **O motor nao decide imposto, e nao calcula.** Situacao tributaria e valores vem prontos do
    backend; aqui eles so viram grupo de XML. O motor recusa o quadro que nao consegue montar
    corretamente — nunca a situacao tributaria que apenas nao esperava.
+7. **Somar nao e calcular.** Os totais do documento (`ICMSTot`) sao somados dos itens em
+   `TotaisDocumento` — a SEFAZ confere o total contra o somatorio, e total constante e
+   rejeicao garantida em nota com imposto destacado.
+8. **Mensagem de recusa nao muda com o locale.** Valores em mensagem passam por
+   `FormatoFiscal.Valor`, sempre pt-BR: sem isso a mesma recusa sai "10,00" no Windows de
+   desenvolvimento e "10.00" no contentor.

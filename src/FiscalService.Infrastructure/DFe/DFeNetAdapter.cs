@@ -39,7 +39,7 @@ namespace FiscalService.Infrastructure.DFe;
 /// biblioteca). Toda configuracao e criada por request e passada explicitamente, porque o
 /// servico e stateless e atende chamadas concorrentes com certificados diferentes.
 /// </summary>
-public class DFeNetAdapter : IFiscalEngine
+public partial class DFeNetAdapter : IFiscalEngine
 {
     private const string VersaoLayoutNfe = "4.00";
     private const string VersaoAplicativo = "FiscalService 1.0";
@@ -166,7 +166,9 @@ public class DFeNetAdapter : IFiscalEngine
         try
         {
             using var cert = LerCertificado(certificado);
-            var configuracao = CriarConfiguracao(ambiente, UfDaChave(chaveAcesso), certificado);
+            // Modelo sai da propria chave: consulta e cancelamento servem aos dois documentos.
+            var configuracao = CriarConfiguracao(
+                ambiente, UfDaChave(chaveAcesso), certificado, ModeloDaChave(chaveAcesso));
 
             using var servico = new ServicosNFe(configuracao, cert);
             var retorno = servico.NfeConsultaProtocolo(chaveAcesso);
@@ -200,7 +202,9 @@ public class DFeNetAdapter : IFiscalEngine
         try
         {
             using var cert = LerCertificado(certificado);
-            var configuracao = CriarConfiguracao(ambiente, UfDaChave(chaveAcesso), certificado);
+            // Modelo sai da propria chave: consulta e cancelamento servem aos dois documentos.
+            var configuracao = CriarConfiguracao(
+                ambiente, UfDaChave(chaveAcesso), certificado, ModeloDaChave(chaveAcesso));
 
             using var servico = new ServicosNFe(configuracao, cert);
             var retorno = servico.RecepcaoEventoCancelamento(
@@ -301,14 +305,18 @@ public class DFeNetAdapter : IFiscalEngine
         }
     }
 
-    private static ConfiguracaoServico CriarConfiguracao(Ambiente ambiente, Estado uf, Certificado certificado)
+    private static ConfiguracaoServico CriarConfiguracao(
+        Ambiente ambiente,
+        Estado uf,
+        Certificado certificado,
+        ModeloDocumento modelo = ModeloDocumento.NFCe)
     {
         return new ConfiguracaoServico
         {
             cUF = uf,
             tpAmb = ambiente == Ambiente.Producao ? TipoAmbiente.Producao : TipoAmbiente.Homologacao,
             tpEmis = TipoEmissao.teNormal,
-            ModeloDocumento = ModeloDocumento.NFCe,
+            ModeloDocumento = modelo,
             VersaoLayout = VersaoServicoNfe,
             VersaoNFeAutorizacao = VersaoServicoNfe,
             VersaoNFeRetAutorizacao = VersaoServicoNfe,
@@ -331,7 +339,7 @@ public class DFeNetAdapter : IFiscalEngine
 
     // ---------------------------------------------------------------- montagem da NFe
 
-    private static NFeClasse MontarNfe(Nfce nfce, Ambiente ambiente, Estado uf)
+    internal static NFeClasse MontarNfe(Nfce nfce, Ambiente ambiente, Estado uf)
     {
         if (nfce.Itens.Count == 0)
             throw new ArgumentException("NFC-e sem itens");
@@ -594,6 +602,20 @@ public class DFeNetAdapter : IFiscalEngine
             throw new ArgumentException($"UF invalida na chave de acesso: {chaveAcesso[..2]}");
 
         return (Estado)codigoUf;
+    }
+
+    /// <summary>Posicoes 21 e 22 da chave de acesso sao o modelo do documento: 55 ou 65.</summary>
+    private static ModeloDocumento ModeloDaChave(string chaveAcesso)
+    {
+        if (chaveAcesso?.Length != 44)
+            throw new ArgumentException($"Chave de acesso invalida: {chaveAcesso}");
+
+        return chaveAcesso.Substring(20, 2) switch
+        {
+            "55" => ModeloDocumento.NFe,
+            "65" => ModeloDocumento.NFCe,
+            var modelo => throw new ArgumentException($"Modelo de documento invalido na chave: {modelo}")
+        };
     }
 
     /// <summary>Posicoes 7 a 20 da chave de acesso sao o CNPJ do emitente.</summary>
