@@ -108,7 +108,7 @@ public partial class DFeNetAdapter
             using var servico = new ServicosNFe(configuracao, cert);
             var retorno = servico.NfeInutilizacao(
                 cnpj: ApenasDigitos(pedido.Cnpj),
-                ano: pedido.Ano,
+                ano: AnoDeDoisDigitos(pedido.Ano),
                 modelo: ModeloDoNumero(pedido.Modelo),
                 serie: pedido.Serie,
                 numeroInicial: pedido.NumeroInicial,
@@ -148,6 +148,16 @@ public partial class DFeNetAdapter
             return Task.FromResult(new InutilizacaoResultado(false, null, null, ex.Message));
         }
     }
+
+    /// <summary>
+    /// Ano com dois digitos, como o layout da inutilizacao exige.
+    ///
+    /// O identificador do pedido e <c>ID + cUF + ano + CNPJ + modelo + serie +
+    /// faixa</c>, com tamanho fixo. Mandar 2026 em vez de 26 estica o ID em dois
+    /// caracteres e a SEFAZ devolve <c>215 - Falha no esquema XML</c>, sem dizer
+    /// qual campo. Aconteceu na primeira inutilizacao real, em 14/08/2026.
+    /// </summary>
+    private static int AnoDeDoisDigitos(int ano) => ano % 100;
 
     /// <summary>Modelo pelo numero do layout — 55 ou 65.</summary>
     private static ModeloDocumento ModeloDoNumero(int modelo) => modelo switch

@@ -47,6 +47,17 @@ public partial class DFeNetAdapter : IFiscalEngine
     private const VersaoQrCode VersaoQrCodeNfce = VersaoQrCode.QrCodeVersao2;
 
     /// <summary>
+    /// Espera maxima por uma resposta da SEFAZ, em milissegundos.
+    ///
+    /// O padrao da biblioteca (5s) e curto demais: o pedido chega e e homologado,
+    /// mas a resposta nao volta a tempo. Do nosso lado isso vira erro, e a
+    /// tentativa seguinte volta como duplicidade — com o ato ja praticado e
+    /// nenhum protocolo gravado. Aconteceu na primeira inutilizacao real, em
+    /// 14/08/2026.
+    /// </summary>
+    private const int TimeoutServicoMs = 30_000;
+
+    /// <summary>
     /// Texto obrigatorio no nome do destinatario em ambiente de homologacao (NT 2015/002).
     /// </summary>
     private const string NomeDestinatarioHomologacao =
@@ -323,6 +334,7 @@ public partial class DFeNetAdapter : IFiscalEngine
             VersaoNfeConsultaProtocolo = VersaoServicoNfe,
             VersaoNfeStatusServico = VersaoServicoNfe,
             VersaoRecepcaoEventoCceCancelamento = VersaoServicoNfe,
+            TimeOut = TimeoutServicoMs,
             // Sem schemas XSD embarcados no container, a validacao local nao tem como rodar;
             // quem valida e a propria SEFAZ.
             ValidarSchemas = false,
