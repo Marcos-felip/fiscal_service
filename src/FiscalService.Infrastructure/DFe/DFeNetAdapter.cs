@@ -400,14 +400,7 @@ public partial class DFeNetAdapter : IFiscalEngine
                 {
                     new()
                     {
-                        detPag = nfce.Pagamentos
-                            .Select(p => new detPag
-                            {
-                                indPag = IndicadorPagamentoDetalhePagamento.ipDetPgVista,
-                                tPag = MapearFormaPagamento(p.Tipo),
-                                vPag = p.Valor
-                            })
-                            .ToList()
+                        detPag = nfce.Pagamentos.Select(MontarDetalhePagamento).ToList()
                     }
                 }
             }
@@ -557,6 +550,55 @@ public partial class DFeNetAdapter : IFiscalEngine
     }
 
     // ---------------------------------------------------------------- mapeamentos
+
+    /// <summary>
+    /// Formas de pagamento que exigem o grupo <c>card</c> (YA04) no XML.
+    ///
+    /// A lista e a do layout 4.00 para o grupo "Cartoes, PIX, Boletos e outros
+    /// Pagamentos Eletronicos". Faltar o grupo numa delas e a <b>rejeicao 391</b>
+    /// — que fala em "dados do cartao de credito/debito" mesmo quando o
+    /// pagamento foi PIX, e por isso e dificil de diagnosticar. Informa-lo fora
+    /// da lista e rejeicao por grupo indevido: nao da para simplificar mandando
+    /// sempre.
+    ///
+    /// Aconteceu em 13/08/2026 com a primeira venda paga em PIX, ja depois de a
+    /// numeracao ter sido consumida.
+    /// </summary>
+    private static readonly HashSet<FormaPagamento> PagamentosEletronicos = new()
+    {
+        FormaPagamento.fpCartaoCredito,
+        FormaPagamento.fpCartaoDebito,
+        FormaPagamento.fpValeAlimentacao,
+        FormaPagamento.fpValeRefeicao,
+        FormaPagamento.fpValePresente,
+        FormaPagamento.fpValeCombustivel,
+        FormaPagamento.fpBoletoBancario,
+        FormaPagamento.fpPagamentoInstantaneoPIXDinamico
+    };
+
+    /// <summary>
+    /// Detalhe de um pagamento, com o grupo de cartoes quando a forma exige.
+    ///
+    /// <c>tpIntegra</c> e sempre "nao integrado": o sistema nao se comunica com
+    /// TEF nem com credenciadora. Declarar integracao existente tornaria
+    /// obrigatorios o CNPJ da credenciadora, a bandeira e o codigo de
+    /// autorizacao — campos que nao ha como preencher, o que so trocaria uma
+    /// rejeicao por outra.
+    /// </summary>
+    private static detPag MontarDetalhePagamento(Pagamento pagamento)
+    {
+        var forma = MapearFormaPagamento(pagamento.Tipo);
+
+        return new detPag
+        {
+            indPag = IndicadorPagamentoDetalhePagamento.ipDetPgVista,
+            tPag = forma,
+            vPag = pagamento.Valor,
+            card = PagamentosEletronicos.Contains(forma)
+                ? new card { tpIntegra = TipoIntegracaoPagamento.TipNaoIntegrado }
+                : null
+        };
+    }
 
     private static FormaPagamento MapearFormaPagamento(TipoPagamento tipo) => tipo switch
     {

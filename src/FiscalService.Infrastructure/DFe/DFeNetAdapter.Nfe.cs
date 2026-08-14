@@ -193,14 +193,9 @@ public partial class DFeNetAdapter
                 {
                     new()
                     {
-                        detPag = nfe.Pagamentos
-                            .Select(p => new detPag
-                            {
-                                indPag = IndicadorPagamentoDetalhePagamento.ipDetPgVista,
-                                tPag = MapearFormaPagamento(p.Tipo),
-                                vPag = p.Valor
-                            })
-                            .ToList()
+                        // Mesma montagem da NFC-e: o grupo de cartoes exigido no
+                        // pagamento eletronico vale para os dois modelos.
+                        detPag = nfe.Pagamentos.Select(MontarDetalhePagamento).ToList()
                     }
                 }
             }

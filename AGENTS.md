@@ -112,3 +112,8 @@ destinatario pessoa juridica.** O que esta fora e recusado nomeando o motivo, em
 8. **Mensagem de recusa nao muda com o locale.** Valores em mensagem passam por
    `FormatoFiscal.Valor`, sempre pt-BR: sem isso a mesma recusa sai "10,00" no Windows de
    desenvolvimento e "10.00" no contentor.
+9. **Pagamento eletronico leva o grupo `card`.** Cartao, vales, boleto e PIX exigem o grupo
+   (YA04); dinheiro, cheque, credito de loja, sem pagamento e outros o recusam. A lista esta
+   em `PagamentosEletronicos`, no adapter. Faltar o grupo e a **rejeicao 391**, que fala em
+   "dados do cartao" mesmo quando o pagamento foi PIX — e chega depois de a numeracao ter
+   sido consumida. `tpIntegra` e sempre 2 (nao integrado): o sistema nao fala com TEF.
