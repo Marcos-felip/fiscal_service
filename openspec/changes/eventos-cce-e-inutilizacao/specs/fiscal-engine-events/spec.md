@@ -2,70 +2,68 @@
 
 ### Requirement: Carta de Correção Eletrônica
 O motor SHALL transmitir o evento de carta de correção (110110) para documento
-autorizado, com o texto da correção entre 15 e 1000 caracteres e sequência
-incremental por nota.
+autorizado, recusando antes da transmissão o texto fora de 15 a 1000 caracteres e
+a sequência fora da faixa legal de 1 a 20.
 
-#### Scenario: Primeira correção
-- **WHEN** uma CC-e é solicitada para uma nota autorizada, com texto válido
-- **THEN** o evento é transmitido com sequência 1 e o retorno traz a situação informada pela SEFAZ
+O motor **não** confere se a sequência repete ou salta, nem quantas correções a
+nota já teve: isso exige o histórico do documento, e o motor não persiste nada.
+Quem impõe essas duas regras é o chamador, que tem os eventos gravados.
 
-#### Scenario: Correção subsequente
-- **WHEN** uma segunda CC-e é solicitada para a mesma nota
-- **THEN** o evento é transmitido com sequência 2
+#### Scenario: Correção transmitida
+- **WHEN** uma CC-e é solicitada para uma nota autorizada, com texto e sequência válidos
+- **THEN** o evento é transmitido e o retorno traz a situação informada pela SEFAZ
 
 #### Scenario: Texto curto demais
 - **WHEN** o texto da correção tem menos de 15 caracteres
 - **THEN** a requisição é recusada antes da transmissão, com mensagem indicando o mínimo
 
-#### Scenario: Limite de correções
-- **WHEN** já existem 20 cartas de correção para a nota
-- **THEN** a requisição é recusada com mensagem explicando o limite legal
-
-#### Scenario: Sequência repetida ou salteada
-- **WHEN** a sequência informada já foi usada ou pula um número
+#### Scenario: Texto longo demais
+- **WHEN** o texto da correção passa de 1000 caracteres
 - **THEN** a requisição é recusada antes da transmissão
 
-### Requirement: A CC-e não corrige o que a lei proíbe
-O motor SHALL recusar carta de correção que pretenda alterar valores, datas,
-emitente ou destinatário, com mensagem explicando que esses campos exigem
-cancelamento e nova emissão.
+#### Scenario: Sequência fora da faixa legal
+- **WHEN** a sequência informada é menor que 1 ou maior que 20
+- **THEN** a requisição é recusada citando o limite de 20 correções por nota
 
-#### Scenario: Tentativa de corrigir valor
-- **WHEN** a correção indica mudança de valor da nota
-- **THEN** a requisição é recusada com orientação de cancelar e reemitir
+### Requirement: A condição de uso da CC-e viaja com o evento
+O motor SHALL incluir no XML o texto legal de condição de uso da carta de
+correção, e SHALL devolvê-lo no retorno para que o chamador possa apresentá-lo
+antes da confirmação.
+
+O motor SHALL NOT tentar deduzir, do texto livre da correção, se ela altera
+valores, datas ou as partes. A CC-e é texto livre; inferir intenção seria
+heurística, que ou recusa correção legítima ou aprova a ilegítima. A restrição é
+legal e recai sobre o emitente — o instrumento que o layout oferece é justamente
+declarar a condição de uso, não filtrar o texto.
+
+#### Scenario: Condição de uso no XML
+- **WHEN** uma CC-e é montada
+- **THEN** o XML contém o texto legal de condição de uso
+
+#### Scenario: Condição de uso devolvida
+- **WHEN** o motor responde a uma solicitação de CC-e
+- **THEN** o retorno traz a condição de uso, para exibição a quem confirma
 
 ### Requirement: Inutilização de faixa de numeração
 O motor SHALL transmitir a inutilização de uma faixa de numeração de uma série,
-com justificativa, para o modelo e ambiente informados.
+recusando antes da transmissão a faixa invertida e a justificativa fora de 15 a
+255 caracteres.
+
+A inutilização age sobre uma **faixa**, não sobre um documento: ela não tem chave
+de acesso nem protocolo de evento, e por isso seu retorno é próprio.
 
 #### Scenario: Inutilizar faixa
 - **WHEN** a inutilização de uma faixa é solicitada com justificativa válida
-- **THEN** o evento é transmitido e o retorno traz o protocolo
+- **THEN** o pedido é transmitido e o retorno traz a situação e o protocolo da SEFAZ
 
 #### Scenario: Faixa invertida
 - **WHEN** o número inicial é maior que o final
 - **THEN** a requisição é recusada antes da transmissão
 
 #### Scenario: Justificativa curta demais
-- **WHEN** a justificativa tem menos que o mínimo exigido
+- **WHEN** a justificativa tem menos de 15 caracteres
 - **THEN** a requisição é recusada com mensagem indicando o mínimo
 
-### Requirement: Cancelamento para os dois modelos
-O cancelamento SHALL atender NFC-e e NF-e, respeitando as regras de prazo de cada
-modelo e mantendo o retorno padronizado.
-
-#### Scenario: Cancelamento de NF-e
-- **WHEN** o cancelamento de uma NF-e autorizada é solicitado
-- **THEN** o evento é transmitido no mesmo formato usado para NFC-e
-
-#### Scenario: Cancelamento homologado fora do prazo
-- **WHEN** a SEFAZ responde que o cancelamento foi homologado fora do prazo
-- **THEN** o motor trata como sucesso, como já faz hoje
-
-### Requirement: Retorno padronizado entre eventos
-Os três eventos SHALL devolver a mesma estrutura de resultado — sucesso, código,
-motivo, protocolo e XML — para que o consumidor os trate por um caminho só.
-
-#### Scenario: Consumo uniforme
-- **WHEN** o backend processa o retorno de cancelamento, carta de correção ou inutilização
-- **THEN** encontra os mesmos campos, sem tratamento específico por tipo de evento
+#### Scenario: Número único
+- **WHEN** o número inicial é igual ao final
+- **THEN** a faixa é aceita, porque inutilizar um número só é o caso comum

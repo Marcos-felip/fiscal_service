@@ -96,6 +96,26 @@ Linux. A resposta traz `danfeContentType` para o backend saber o que recebeu.
 destinatario pessoa juridica.** O que esta fora e recusado nomeando o motivo, em
 `EmitirNfeValidator` — nunca montado por aproximacao.
 
+### Eventos fiscais
+
+Tres atos, em `docs/CONTRATO_EVENTOS.md`: cancelamento (110111, nas rotas de cada
+modelo), carta de correcao (110110) e inutilizacao de faixa.
+
+**A inutilizacao nao e evento.** Age sobre uma faixa, nao sobre um documento: sem
+chave de acesso, sem `retEvento`, servico proprio da SEFAZ. Retorno proprio
+tambem — padronizar com os eventos esconderia isso. E a UF vem no pedido, porque
+sem chave nao ha de onde deduzi-la.
+
+**O motor confere forma, nao historico.** Na CC-e ele valida o texto (15 a 1000)
+e a faixa da sequencia (1 a 20). Se a sequencia repete ou salta, e quantas
+correcoes a nota ja teve, e o backend quem sabe — o motor nao persiste nada.
+
+**O motor nao julga o conteudo da correcao.** A CC-e e texto livre; deduzir se
+ela altera valores seria heuristica que ou recusa correcao legitima ou aprova a
+ilegitima com ar de validada. O layout oferece `xCondUso` no lugar: texto legal
+fixo que vai no XML e volta no retorno — inclusive na recusa —, para ser lido por
+quem confirma.
+
 ## Regras criticas
 
 1. **Stateless**: nao persiste nada. Toda informacao vem por request.

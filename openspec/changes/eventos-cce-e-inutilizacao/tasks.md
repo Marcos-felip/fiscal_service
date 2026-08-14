@@ -1,45 +1,47 @@
-> **Reveja esta proposta antes de começar** — escrita antes da etapa 3.
+> **Podada em 14/08/2026** contra o código real. O que saiu daqui e por quê está
+> em "O que a revisão encontrou", no `proposal.md`.
 
-## 1. Pré-requisito
+## 1. Pré-requisitos
 
-- [ ] 1.1 Etapa 3 (`emitir-nfe-modelo-55`) aplicada
-- [ ] 1.2 Revisar esta proposta contra o que a etapa 3 produziu
+- [x] 1.1 Etapa 3 (`emitir-nfe-modelo-55`) aplicada e arquivada em 14/08/2026
+- [x] 1.2 Revisar esta proposta contra o que a etapa 3 produziu — feito nesta poda, com cinco achados
 
 ## 2. Carta de Correção
 
-- [ ] 2.1 Caso de uso e DTO da CC-e (evento 110110)
-- [ ] 2.2 Validar texto entre 15 e 1000 caracteres
-- [ ] 2.3 Validar sequência incremental: recusar repetição e salto
-- [ ] 2.4 Recusar até 20 correções por nota, com mensagem citando o limite legal
-- [ ] 2.5 Recusar correção que pretenda alterar valores, datas, emitente ou destinatário
-- [ ] 2.6 `RecepcaoEvento` de CC-e no adapter, aproveitando `VersaoRecepcaoEventoCceCancelamento` já configurado
+- [x] 2.1 Caso de uso, DTO e validador da CC-e (evento 110110)
+- [x] 2.2 Texto da correção entre 15 e 1000 caracteres
+- [x] 2.3 `nSeqEvento` entre 1 e 20 — a **faixa legal**, que é o que o motor sabe conferir
+- [x] 2.4 ~~Recusar repetição e salto de sequência~~ · ~~limite de 20 por nota~~ — **atravessa para o backend:** exige o histórico da nota, e o motor não persiste nada
+- [x] 2.5 ~~Recusar correção que altere valores~~ — **não implementável:** a CC-e é texto livre, e detectar intenção seria heurística. Vira `xCondUso` no XML e aviso na tela
+- [x] 2.6 `RecepcaoEventoCartaCorrecao` no adapter
+- [x] 2.7 Devolver a condição de uso, para o backend guardá-la e o frontend mostrá-la antes de confirmar
 
 ## 3. Inutilização
 
-- [ ] 3.1 Caso de uso e DTO: série, faixa inicial e final, justificativa, modelo, ambiente
-- [ ] 3.2 Validar faixa (inicial ≤ final) e justificativa mínima
-- [ ] 3.3 Chamada de inutilização no adapter
+- [x] 3.1 Caso de uso, DTO e validador: CNPJ, ano, modelo, série, faixa e justificativa
+- [x] 3.2 Faixa coerente (inicial ≤ final) e justificativa de 15 a 255 caracteres
+- [x] 3.3 `NfeInutilizacao` no adapter, com retorno próprio — ela age sobre uma faixa, não sobre um documento
 
-## 4. Cancelamento para os dois modelos
+## 4. Cancelamento
 
-- [ ] 4.1 Generalizar `Cancelar` para NF-e, mantendo `cStat` 135 e 155 como sucesso
-- [ ] 4.2 Prazos por modelo explicitados no domínio, não no adapter
+- [x] 4.1 ~~Generalizar `Cancelar` para NF-e~~ — **feito na etapa 3:** `ModeloDaChave` resolve o modelo pelas posições 21-22 da chave
+- [x] 4.2 ~~Prazos por modelo no domínio~~ — **descartado:** o prazo varia por UF e quem decide é a SEFAZ. Travar localmente recusaria cancelamento que a UF aceitaria
 
-## 5. Padronização
+## 5. Rotas
 
-- [ ] 5.1 Resultado comum aos três eventos: sucesso, código, motivo, protocolo, XML
-- [ ] 5.2 Rotas sob `/api/eventos/`
+- [x] 5.1 `POST /api/eventos/carta-correcao`
+- [x] 5.2 `POST /api/eventos/inutilizar`
+- [x] 5.3 ~~Resultado comum aos três eventos~~ — a inutilização não tem chave nem protocolo de evento; um formato só esconderia isso
 
 ## 6. Testes
 
-- [ ] 6.1 CC-e: texto curto, sequência repetida, sequência salteada, limite de 20
-- [ ] 6.2 CC-e que tenta corrigir valor é recusada
-- [ ] 6.3 Inutilização com faixa invertida e justificativa curta recusadas
-- [ ] 6.4 Cancelamento de NF-e no mesmo formato do de NFC-e
-- [ ] 6.5 **Regressão:** cancelamento de NFC-e inalterado
-- [ ] 6.6 `dotnet test` verde
+- [x] 6.1 CC-e: texto curto, texto longo e sequência fora da faixa recusados
+- [x] 6.2 Inutilização: faixa invertida e justificativa curta recusadas
+- [x] 6.3 A condição de uso volta no retorno, **inclusive na recusa** — quem confirma precisa lê-la antes. O `xCondUso` do XML é preenchido pela própria DFe.NET, e testá-lo exigiria certificado e rede: fica coberto na emissão real
+- [x] 6.4 **Regressão:** cancelamento de NFC-e e de NF-e inalterados
+- [x] 6.5 `dotnet test` verde
 
 ## 7. Documentação
 
-- [ ] 7.1 `AGENTS.md` do motor: os três eventos e suas regras
-- [ ] 7.2 Publicar o contrato para a change irmã do backend
+- [x] 7.1 `AGENTS.md`: os três eventos, e o que é do motor e o que é do backend
+- [x] 7.2 `docs/`: contrato dos dois endpoints novos, para a change irmã do backend
